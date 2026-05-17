@@ -1,14 +1,24 @@
  import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, MapPin, Calendar, Users, Star, ArrowRight } from 'lucide-react';
-import api from '../api';
+import api, { BASE_URL } from '../api';
 
+/**
+ * Page d'accueil de l'application Web Résidence PC.
+ * Affiche la section Hero avec recherche et la liste des logements en vedette.
+ */
 const Home = () => {
+    // État pour stocker la liste des logements récupérés depuis l'API
     const [logements, setLogements] = useState([]);
+    // État pour gérer l'affichage du chargement
     const [loading, setLoading] = useState(true);
+    // État pour le champ de recherche de texte
     const [searchQuery, setSearchQuery] = useState('');
     const navigate = useNavigate();
 
+    /**
+     * Gère la redirection vers la page de catalogue avec les critères de recherche.
+     */
     const handleSearch = () => {
         if (searchQuery.trim()) {
             navigate(`/residences?q=${encodeURIComponent(searchQuery.trim())}`);
@@ -17,21 +27,29 @@ const Home = () => {
         }
     };
 
+    /**
+     * Récupération automatique des logements au montage du composant.
+     */
     useEffect(() => {
         api.get('/logements')
             .then(res => {
+                // On s'adapte au format de réponse de Laravel (data ou tableau direct)
                 setLogements(res.data.data || res.data);
             })
-            .catch(err => console.error(err))
+            .catch(err => console.error('Erreur lors du chargement des logements:', err))
             .finally(() => setLoading(false));
     }, []);
 
+    /**
+     * Utilitaire pour construire l'URL complète de l'image stockée dans Laravel.
+     */
     const getImageUrl = (chemin) => {
         if (!chemin) return null;
         if (chemin.startsWith('http')) return chemin;
-        return `http://10.19.114.201:8000/storage/${chemin}`;
+        return `${BASE_URL}/storage/${chemin}`;
     };
 
+    // Affichage d'un spinner pendant le chargement des données
     if (loading) {
         return (
             <div className="flex justify-center items-center h-64">
@@ -42,12 +60,12 @@ const Home = () => {
 
     return (
         <div className="space-y-24 pb-20">
-            {/* Hero Section */}
+            {/* 1. SECTION HERO : Titre principal et barre de recherche */}
             <section className="relative h-[750px] -mt-20 flex items-center justify-center overflow-hidden rounded-b-[100px] shadow-2xl">
                 <img 
                     src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80" 
                     className="absolute inset-0 w-full h-full object-cover scale-105 animate-subtle-zoom"
-                    alt="Luxury Residence"
+                    alt="Luxe Résidence PC"
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/70"></div>
                 
@@ -63,6 +81,7 @@ const Home = () => {
                         Vivez <br/><span className="text-primary-light italic">l'extraordinaire</span>
                     </h1>
                     
+                    {/* Barre de recherche Glassmorphism */}
                     <div className="bg-white/95 backdrop-blur-2xl p-2 rounded-[40px] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.35)] flex flex-col md:flex-row items-center max-w-4xl mx-auto border border-white/40 animate-slide-up-delayed">
                         <div className="flex-1 flex items-center px-8 py-6 rounded-3xl w-full group transition-all duration-300">
                             <Search className="text-primary w-5 h-5 opacity-70" />
@@ -71,7 +90,7 @@ const Home = () => {
                                 <input 
                                     type="text" 
                                     placeholder="Où souhaitez-vous séjourner ?" 
-                                    className="bg-transparent border-none p-0 focus:ring-0 text-black font-black text-lg w-full placeholder:text-gray-300" 
+                                    className="bg-transparent border-none p-0 focus:ring-0 text-black font-black text-lg w-full placeholder:text-black-300" 
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -83,7 +102,7 @@ const Home = () => {
                             <Calendar className="text-primary w-5 h-5 opacity-70" />
                             <div className="ml-4 text-left">
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Dates</label>
-                                <input type="text" placeholder="Ajouter des dates" className="bg-transparent border-none p-0 focus:ring-0 text-black font-black text-lg w-full placeholder:text-gray-300" />
+                                <input type="text" placeholder="Ajouter des dates" className="bg-transparent border-none p-0 focus:ring-0 text-black font-black text-lg w-full placeholder:text-black-300" />
                             </div>
                         </div>
                         <button 
@@ -96,7 +115,7 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* Listings Grid */}
+            {/* 2. SECTION LISTINGS : Grille des logements */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex flex-col md:flex-row justify-between items-end mb-16 space-y-8 md:space-y-0">
                     <div className="max-w-2xl">
@@ -120,6 +139,7 @@ const Home = () => {
                             to={`/logements/${logement.id}`} 
                             className="group block"
                         >
+                            {/* Carte du logement avec effet de survol */}
                             <div className="relative aspect-[4/5] rounded-[48px] overflow-hidden mb-8 shadow-2xl group-hover:shadow-primary/20 transition-all duration-700 border border-gray-100">
                                 {logement.photos && logement.photos.length > 0 ? (
                                     <img 
@@ -136,10 +156,8 @@ const Home = () => {
                                     </div>
                                 )}
                                 
-                                {/* Overlay Gradient */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
-                                {/* Floating Labels */}
                                 <div className="absolute top-8 left-8 right-8 flex justify-between items-start pointer-events-none">
                                     <div className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-2xl shadow-xl border border-white">
                                         <div className="flex items-center">
@@ -177,7 +195,7 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* Signature Services section */}
+            {/* 3. SECTION SERVICES : Signature PC - Argumentaire de luxe */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 bg-slate-50 rounded-[80px] border border-gray-100">
                 <div className="text-center mb-20">
                     <h2 className="text-5xl md:text-6xl font-black tracking-tighter text-gray-900 leading-none mb-6">L'Expérience <br/><span className="text-primary italic">Signature PC</span></h2>
@@ -201,7 +219,7 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* Call Action */}
+            {/* 4. SECTION CALL TO ACTION : Inscription club */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="bg-primary p-20 rounded-[80px] text-center shadow-2xl shadow-primary/20 relative overflow-hidden group">
                     <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
@@ -217,6 +235,9 @@ const Home = () => {
     );
 };
 
+/**
+ * Petit composant interne pour afficher les cartes de services.
+ */
 const ServiceCard = ({ title, desc, isFeatured }) => (
     <div className={`p-12 rounded-[50px] border transition-all duration-500 hover:-translate-y-2 ${isFeatured ? 'bg-primary text-white border-primary shadow-2xl shadow-primary/20' : 'bg-white border-gray-100 text-gray-900 shadow-sm'}`}>
         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-8 ${isFeatured ? 'bg-white/20' : 'bg-primary/5'}`}>

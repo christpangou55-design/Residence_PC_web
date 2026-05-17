@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useOutletContext } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, User, Phone } from 'lucide-react';
 import api from '../api';
 
 const Register = () => {
-    const [formData, setFormData] = useState({ nom: '', email: '', telephone: '', password: '', password_confirmation: '' });
+    const { setUser } = useOutletContext();
+    const [formData, setFormData] = useState({ nom: '', email: '', telephone: '', password: '', password_confirmation: '', role: 'client' });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [error, setError] = useState('');
@@ -18,6 +19,7 @@ const Register = () => {
         try {
             const res = await api.post('/auth/register', formData);
             localStorage.setItem('token', res.data.token);
+            setUser(res.data.user);
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || 'Erreur lors de l\'inscription.');
@@ -73,6 +75,26 @@ const Register = () => {
                                 onChange={handleChange} 
                             />
                             
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] px-2">Type de compte</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, role: 'client' })}
+                                        className={`py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${formData.role === 'client' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-50 text-gray-400 hover:bg-slate-100'}`}
+                                    >
+                                        Voyageur
+                                    </button>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, role: 'vendeur' })}
+                                        className={`py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${formData.role === 'vendeur' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-50 text-gray-400 hover:bg-slate-100'}`}
+                                    >
+                                        Hôte / Vendeur
+                                    </button>
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <PasswordField 
                                     label="Mot de passe" 

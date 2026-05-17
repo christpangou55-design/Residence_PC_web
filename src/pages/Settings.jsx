@@ -1,8 +1,33 @@
+import { useState, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { User, Lock, Bell, Shield, CreditCard, ChevronRight, Globe, Camera } from 'lucide-react';
+import api from '../api';
 
 const Settings = () => {
-    const { user } = useOutletContext();
+    const { user, setUser } = useOutletContext();
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef(null);
+
+    const handlePhotoChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('photo', file);
+
+        setUploading(true);
+        try {
+            const res = await api.post('/auth/profile-photo', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setUser(res.data.user);
+        } catch (error) {
+            console.error("Erreur lors de l'upload:", error);
+            alert("Erreur lors du téléchargement de l'image.");
+        } finally {
+            setUploading(false);
+        }
+    };
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-24">
@@ -18,10 +43,30 @@ const Settings = () => {
                         <div className="absolute top-0 left-0 w-full h-32 bg-slate-50 group-hover:bg-primary/5 transition-colors"></div>
                         <div className="relative z-10">
                             <div className="relative inline-block mb-6">
-                                <div className="w-32 h-32 rounded-[40px] bg-white shadow-xl flex items-center justify-center border-4 border-white overflow-hidden">
-                                    <User size={64} className="text-slate-200" />
+                                <div className="w-32 h-32 rounded-[40px] bg-white shadow-xl flex items-center justify-center border-4 border-white overflow-hidden relative">
+                                    {user?.profile_photo_url ? (
+                                        <img src={user.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User size={64} className="text-slate-200" />
+                                    )}
+                                    {uploading && (
+                                        <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                                        </div>
+                                    )}
                                 </div>
-                                <button className="absolute bottom-0 right-0 bg-primary text-white p-3 rounded-2xl shadow-xl hover:scale-110 transition-transform">
+                                <input 
+                                    type="file" 
+                                    ref={fileInputRef} 
+                                    onChange={handlePhotoChange} 
+                                    accept="image/*" 
+                                    className="hidden" 
+                                />
+                                <button 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="absolute bottom-0 right-0 bg-primary text-white p-3 rounded-2xl shadow-xl hover:scale-110 transition-transform disabled:opacity-50"
+                                    disabled={uploading}
+                                >
                                     <Camera size={16} />
                                 </button>
                             </div>
@@ -31,12 +76,30 @@ const Settings = () => {
                             <div className="mt-10 pt-10 border-t border-slate-50 space-y-4">
                                 <div className="flex justify-between items-center px-4">
                                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Statut</span>
-                                    <span className="bg-primary/10 text-primary text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter">Premium Platinum</span>
+                                    <span className="bg-primary/10 text-primary text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter">
+                                        {user?.role === 'admin' ? 'Administrateur' : user?.role === 'vendeur' ? 'Hôte / Vendeur' : 'Voyageur Privilège'}
+                                    </span>
                                 </div>
-                                <div className="flex justify-between items-center px-4">
-                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Membre depuis</span>
-                                    <span className="text-slate-900 text-xs font-black tracking-tighter">Janvier 2024</span>
-                                </div>
+                                {user?.role === 'client' && (
+                                    <div className="px-4 pt-4">
+                                        <button 
+                                            onClick={async () => {
+                                                if (window.confirm("Souhaitez-vous devenir un hôte et commencer à publier des annonces ?")) {
+                                                    try {
+                                                        const res = await api.post('/auth/upgrade');
+                                                        setUser(res.data.user);
+                                                        alert("Félicitations ! Vous êtes maintenant un hôte.");
+                                                    } catch (err) {
+                                                        alert("Erreur lors du passage en mode vendeur.");
+                                                    }
+                                                }
+                                            }}
+                                            className="w-full py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary transition-colors"
+                                        >
+                                            Devenir Hôte
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

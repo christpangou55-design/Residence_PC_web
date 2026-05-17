@@ -6,6 +6,16 @@ import api from './api';
 const Navbar = ({ user, setUser }) => {
     const navigate = useNavigate();
 
+    const [unreadCount, setUnreadCount] = React.useState(0);
+
+    React.useEffect(() => {
+        if (user) {
+            api.get('/notifications/unread-count')
+                .then(res => setUnreadCount(res.data.unread_count))
+                .catch(err => console.error('Error fetching unread count:', err));
+        }
+    }, [user]);
+
     const handleLogout = async () => {
         try {
             await api.post('/auth/logout');
@@ -54,8 +64,12 @@ const Navbar = ({ user, setUser }) => {
                         ) : (
                             <div className="flex items-center space-x-6 bg-white/5 p-1.5 pr-4 rounded-2xl border border-white/10">
                                 <div className="flex items-center space-x-3">
-                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-white/20 to-white/5 flex items-center justify-center border border-white/20 shadow-inner">
-                                        <span className="text-base text-white font-black">{user.nom.charAt(0)}</span>
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-white/20 to-white/5 flex items-center justify-center border border-white/20 shadow-inner overflow-hidden">
+                                        {user.profile_photo_url ? (
+                                            <img src={user.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-base text-white font-black">{user.nom.charAt(0)}</span>
+                                        )}
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="text-sm font-black text-white leading-none">
@@ -70,7 +84,9 @@ const Navbar = ({ user, setUser }) => {
                                  <div className="flex items-center space-x-3">
                                      <Link to="/notifications" className="p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-xl transition duration-300 relative">
                                         <Bell className="w-5 h-5" />
-                                        <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border border-primary-dark"></span>
+                                        {unreadCount > 0 && (
+                                            <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border border-primary-dark"></span>
+                                        )}
                                      </Link>
                                      <Link to="/settings" className="p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-xl transition duration-300">
                                         <Settings className="w-5 h-5" />
@@ -82,6 +98,11 @@ const Navbar = ({ user, setUser }) => {
                                      {user.role === 'admin' && (
                                          <Link to="/admin/logements" className="text-[10px] font-black text-white px-3 py-1.5 bg-primary-dark rounded-lg hover:bg-primary transition uppercase tracking-widest border border-white/10">
                                              Admin
+                                         </Link>
+                                     )}
+                                     {user.role === 'vendeur' && (
+                                         <Link to="/vendeur/logements" className="text-[10px] font-black text-white px-3 py-1.5 bg-primary-dark rounded-lg hover:bg-primary transition uppercase tracking-widest border border-white/10">
+                                             Mes Annonces
                                          </Link>
                                      )}
                                      <button onClick={handleLogout} className="p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-xl transition duration-300">

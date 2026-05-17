@@ -68,11 +68,11 @@ const Dashboard = () => {
                             <path 
                                 d="M0,150 Q100,140 200,160 T400,100 T600,120 T800,50" 
                                 fill="none" 
-                                stroke="#0056A4" 
+                                stroke="#0001bc" 
                                 strokeWidth="4" 
                                 strokeLinecap="round"
                             />
-                            <circle cx="800" cy="50" r="6" fill="#0056A4" />
+                            <circle cx="800" cy="50" r="6" fill="#0001bc" />
                             <rect x="0" y="190" width="800" height="2" fill="#f1f5f9" />
                         </svg>
                     </div>

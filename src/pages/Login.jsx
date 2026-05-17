@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useOutletContext } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import api from '../api';
 
 const Login = () => {
+    const { setUser } = useOutletContext();
     const [credentials, setCredentials] = useState({ email: '', password: '' });
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
@@ -17,6 +18,7 @@ const Login = () => {
         try {
             const res = await api.post('/auth/login', credentials);
             localStorage.setItem('token', res.data.token);
+            setUser(res.data.user);
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || 'Identifiants incorrects.');

@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { ArrowLeft, Calendar, Users, Star, MapPin, Wifi, Wind } from 'lucide-react';
-import api from '../api';
-
-const API_BASE = 'http://10.19.114.201:8000';
+import api, { BASE_URL } from '../api';
 
 const getImageUrl = (chemin) => {
     if (!chemin) return null;
     if (chemin.startsWith('http')) return chemin;
-    return `${API_BASE}/storage/${chemin}`;
+    return `${BASE_URL}/storage/${chemin}`;
 };
 
 const LogementDetails = () => {
@@ -21,6 +19,12 @@ const LogementDetails = () => {
     const [checkLoading, setCheckLoading] = useState(false);
     const [error, setError] = useState('');
 
+    const [avisData, setAvisData] = useState({ moyenne: 0, total: 0, avis: [] });
+    const [newAvis, setNewAvis] = useState({ note: 5, commentaire: '' });
+    const [avisError, setAvisError] = useState('');
+    const [avisSuccess, setAvisSuccess] = useState('');
+    const [submittingAvis, setSubmittingAvis] = useState(false);
+
     const navigate = useNavigate();
     const { user } = useOutletContext();
 
@@ -29,7 +33,30 @@ const LogementDetails = () => {
             .then(res => setLogement(res.data.data || res.data))
             .catch(err => console.error(err))
             .finally(() => setLoading(false));
+
+        api.get(`/logements/${id}/avis`)
+            .then(res => setAvisData(res.data))
+            .catch(err => console.error(err));
     }, [id]);
+
+    const handleAvisSubmit = async (e) => {
+        e.preventDefault();
+        setAvisError('');
+        setAvisSuccess('');
+        setSubmittingAvis(true);
+        try {
+            const res = await api.post(`/logements/${id}/avis`, newAvis);
+            setAvisSuccess(res.data.message);
+            setNewAvis({ note: 5, commentaire: '' });
+            // Rafraîchir les avis
+            const avisRes = await api.get(`/logements/${id}/avis`);
+            setAvisData(avisRes.data);
+        } catch (err) {
+            setAvisError(err.response?.data?.message || 'Erreur lors de la soumission de l\'avis.');
+        } finally {
+            setSubmittingAvis(false);
+        }
+    };
 
     const handleCheckAvailability = async () => {
         if (!dates.date_arrivee || !dates.date_depart) {
@@ -85,7 +112,7 @@ const LogementDetails = () => {
                     <div className="flex items-center space-x-6 text-xs font-black uppercase tracking-widest">
                         <div className="flex items-center text-yellow-500 bg-yellow-50 px-3 py-1.5 rounded-xl border border-yellow-100">
                             <Star className="w-3.5 h-3.5 fill-current" />
-                            <span className="ml-2 text-gray-900 font-black">4.9 <span className="text-gray-400 ml-1">· 12 Avis</span></span>
+                            <span className="ml-2 text-gray-900 font-black">{avisData.total > 0 ? avisData.moyenne : 'Nouveau'} <span className="text-gray-400 ml-1">· {avisData.total} Avis</span></span>
                         </div>
                         <div className="flex items-center text-gray-600">
                             <MapPin className="w-4 h-4 mr-2 text-primary opacity-60" />
@@ -180,6 +207,103 @@ const LogementDetails = () => {
                             {logement.description || "Découvrez une oasis de sérénité au design épuré. Chaque recoin de ce logement a été pensé pour offrir une expérience de séjour inégalée, mêlant haut de gamme et confort absolu."}
                         </div>
                     </section>
+
+                    <section className="pt-10 border-t border-gray-100">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-3xl font-black tracking-tighter text-gray-900">Avis Clients</h2>
+                            <div className="flex items-center space-x-2 text-xl font-black">
+                                <Star className="w-6 h-6 text-yellow-500 fill-yellow-500" />
+                                <span>{avisData.total > 0 ? avisData.moyenne : 'Nouveau'}</span>
+                                <span className="text-gray-400 text-sm font-medium">({avisData.total} avis)</span>
+                            </div>
+                        </div>
+
+                        {/* Liste des avis */}
+                        <div className="space-y-6 mb-12">
+                            {avisData.avis.length === 0 ? (
+                                <p className="text-gray-400 font-medium italic">Aucun avis pour le moment. Soyez le premier à partager votre expérience !</p>
+                            ) : (
+                                avisData.avis.map(avis => (
+                                    <div key={avis.id} className="bg-slate-50 p-6 rounded-3xl border border-gray-100">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black overflow-hidden">
+                                                    {avis.user.profile_photo_url ? (
+                                                        <img src={avis.user.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        avis.user.nom.charAt(0)
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-black text-gray-900">{avis.user.nom}</h4>
+                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                                        {new Date(avis.created_at).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long' })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <Star key={i} className={`w-4 h-4 ${i < avis.note ? 'text-yellow-500 fill-yellow-500' : 'text-gray-200 fill-gray-200'}`} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        {avis.commentaire && (
+                                            <p className="text-gray-600 leading-relaxed font-medium">"{avis.commentaire}"</p>
+                                        )}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {/* Formulaire d'avis (Visible uniquement si connecté) */}
+                        {user ? (
+                            <div className="bg-white border border-gray-100 rounded-3xl p-8 shadow-sm">
+                                <h3 className="text-xl font-black mb-6">Partagez votre expérience</h3>
+                                {avisError && <div className="mb-4 p-3 bg-red-50 text-red-600 text-xs font-black uppercase tracking-widest rounded-xl border border-red-100">{avisError}</div>}
+                                {avisSuccess && <div className="mb-4 p-3 bg-green-50 text-green-600 text-xs font-black uppercase tracking-widest rounded-xl border border-green-100">{avisSuccess}</div>}
+                                
+                                <form onSubmit={handleAvisSubmit} className="space-y-6">
+                                    <div>
+                                        <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Votre note</label>
+                                        <div className="flex space-x-2">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <button
+                                                    type="button"
+                                                    key={star}
+                                                    onClick={() => setNewAvis({...newAvis, note: star})}
+                                                    className="focus:outline-none transition-transform hover:scale-110"
+                                                >
+                                                    <Star className={`w-8 h-8 ${newAvis.note >= star ? 'text-yellow-500 fill-yellow-500' : 'text-gray-200 fill-gray-200'}`} />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Votre commentaire</label>
+                                        <textarea
+                                            className="w-full bg-slate-50 border-none rounded-2xl p-4 font-medium focus:ring-2 focus:ring-primary/20 transition-all text-gray-900 resize-none h-32"
+                                            placeholder="Comment s'est passé votre séjour ?"
+                                            value={newAvis.commentaire}
+                                            onChange={(e) => setNewAvis({...newAvis, commentaire: e.target.value})}
+                                        ></textarea>
+                                    </div>
+                                    <button 
+                                        type="submit" 
+                                        disabled={submittingAvis}
+                                        className="bg-primary text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary-dark transition-colors disabled:opacity-50"
+                                    >
+                                        {submittingAvis ? 'Publication...' : 'Publier mon avis'}
+                                    </button>
+                                </form>
+                            </div>
+                        ) : (
+                            <div className="bg-slate-50 rounded-3xl p-6 text-center border border-gray-100">
+                                <p className="text-gray-500 font-medium text-sm">
+                                    <Link to="/login" className="text-primary font-black hover:underline">Connectez-vous</Link> pour laisser un avis.
+                                </p>
+                            </div>
+                        )}
+                    </section>
                 </div>
 
                 {/* Booking Card - Ultra Premium */}
@@ -191,7 +315,7 @@ const LogementDetails = () => {
                                 <span className="text-gray-400 ml-2 text-sm font-black uppercase tracking-widest opacity-60">/ Nuit</span>
                             </div>
                             <div className="px-3 py-1 bg-primary/5 rounded-lg">
-                                <span className="text-[10px] font-black text-primary uppercase tracking-widest underline cursor-pointer">12 Avis</span>
+                                <span className="text-[10px] font-black text-primary uppercase tracking-widest cursor-pointer">{avisData.total} Avis</span>
                             </div>
                         </div>
 

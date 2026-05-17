@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link, useOutletContext, Navigate } from 'react-router-dom';
 import { ArrowLeft, UploadCloud, Trash2, CalendarPlus } from 'lucide-react';
-import api from '../../api';
+import api, { BASE_URL } from '../../api';
 
 const AdminLogementForm = () => {
     const { user } = useOutletContext();
@@ -28,7 +28,10 @@ const AdminLogementForm = () => {
     const [newDispo, setNewDispo] = useState({ date_debut: '', date_fin: '', type: 'disponible', motif: '' });
 
     const [images, setImages] = useState(null);
+    const [imagePreviews, setImagePreviews] = useState([]);
+    const [existingPhotos, setExistingPhotos] = useState([]);
     const [loading, setLoading] = useState(isEditing);
+    const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
 
     const fetchDisponibilites = async () => {
@@ -61,6 +64,7 @@ const AdminLogementForm = () => {
                         statut: data.statut || 'disponible'
                     });
                     setDisponibilites(data.disponibilites || []);
+                    setExistingPhotos(data.photos || []);
                 })
                 .catch(() => navigate('/admin/logements'))
                 .finally(() => setLoading(false));
@@ -71,8 +75,25 @@ const AdminLogementForm = () => {
     const handleDispoChange = e => setNewDispo({ ...newDispo, [e.target.name]: e.target.value });
 
     const handleFileChange = e => {
-        if (e.target.files.length > 0) setImages(e.target.files);
-        else setImages(null);
+        if (e.target.files.length > 0) {
+            setImages(e.target.files);
+            const previews = Array.from(e.target.files).map(file => URL.createObjectURL(file));
+            setImagePreviews(previews);
+        } else {
+            setImages(null);
+            setImagePreviews([]);
+        }
+    };
+
+    const handleDeletePhoto = async (photoId) => {
+        if (window.confirm('Voulez-vous vraiment supprimer cette photo ?')) {
+            try {
+                await api.delete(`/logements/${id}/photos/${photoId}`);
+                setExistingPhotos(existingPhotos.filter(p => p.id !== photoId));
+            } catch (e) {
+                alert('Erreur lors de la suppression de la photo.');
+            }
+        }
     };
 
     const handleAddDispo = async () => {
@@ -100,6 +121,7 @@ const AdminLogementForm = () => {
     const handleSubmit = async e => {
         e.preventDefault();
         setError('');
+        setIsSaving(true);
         
         let equipParsed = [];
         if (formData.equipements) {
@@ -121,13 +143,15 @@ const AdminLogementForm = () => {
         try {
             if (isEditing) {
                 payload.append('_method', 'PUT');
-                await api.post(`/logements/${id}`, payload, { headers: { 'Content-Type': 'multipart/form-data' } });
+                await api.post(`/logements/${id}`, payload);
             } else {
-                await api.post(`/logements`, payload, { headers: { 'Content-Type': 'multipart/form-data' } });
+                await api.post(`/logements`, payload);
             }
             navigate('/admin/logements');
         } catch (err) {
             setError(err.response?.data?.message || 'Erreur lors de la sauvegarde.');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -184,19 +208,45 @@ const AdminLogementForm = () => {
                         </select>
                     </div>
 
+                    {/* Photos Existantes */ }
+                    {isEditing && existingPhotos.length > 0 && (
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-3">Photos enregistrées</label>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {existingPhotos.map(photo => (
+                                    <div key={photo.id} className="relative group rounded-xl overflow-hidden border border-gray-200 aspect-square">
+                                        <img src={`${BASE_URL}/storage/${photo.chemin}`} alt="logement" className="w-full h-full object-cover" />
+                                        <button type="button" onClick={() => handleDeletePhoto(photo.id)} className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="border border-dashed border-gray-300 p-6 text-center">
                         <UploadCloud className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                        <label className="block text-sm font-medium mb-2">Ajouter des photos</label>
+                        <label className="block text-sm font-medium mb-2">{images ? 'Nouvelles photos sélectionnées' : 'Ajouter de nouvelles photos'}</label>
                         <input type="file" multiple accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
                         <button type="button" onClick={() => fileInputRef.current.click()} className="border border-black px-4 py-2 text-sm font-medium hover:bg-black hover:text-white transition">
                             Sélectionner des images
                         </button>
-                        {images && <p className="mt-3 text-xs text-black font-semibold">{images.length} fichier(s) sélectionné(s)</p>}
+                        
+                        {imagePreviews.length > 0 && (
+                            <div className="mt-6 grid grid-cols-3 sm:grid-cols-4 gap-4">
+                                {imagePreviews.map((preview, index) => (
+                                    <div key={index} className="aspect-square rounded-lg overflow-hidden border border-gray-200">
+                                        <img src={preview} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <div className="pt-4 border-t border-gray-200">
-                        <button type="submit" className="bg-black text-white px-6 py-3 font-medium hover:bg-gray-800 transition">
-                            {isEditing ? 'Enregistrer les informations' : 'Ajouter le logement'}
+                        <button type="submit" disabled={isSaving} className="bg-black text-white px-6 py-3 font-medium hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center">
+                            {isSaving ? 'Sauvegarde en cours...' : (isEditing ? 'Enregistrer les informations' : 'Ajouter le logement')}
                         </button>
                     </div>
                 </form>
