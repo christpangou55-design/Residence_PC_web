@@ -27,9 +27,8 @@ export default function ClientDashboard() {
     const [editingAvis, setEditingAvis] = useState(null);
     const [editForm, setEditForm] = useState({ note: 5, commentaire: '' });
 
-    if (!user) return <Navigate to="/login" replace />;
-
     useEffect(() => {
+        if (!user) return;
         const fetchAll = async () => {
             setLoading(true);
             try {
@@ -50,7 +49,9 @@ export default function ClientDashboard() {
             }
         };
         fetchAll();
-    }, []);
+    }, [user]);
+
+    if (!user) return <Navigate to="/login" replace />;
 
     const today = new Date();
     const filteredReservations = reservations.filter(r => {
