@@ -53,8 +53,12 @@ export default function ClientDashboard() {
 
     if (!user) return <Navigate to="/login" replace />;
 
+    const resArray = Array.isArray(reservations) ? reservations : Object.values(reservations);
+    const notifsArray = Array.isArray(notifications) ? notifications : Object.values(notifications);
+    const avisArray = Array.isArray(avis) ? avis : Object.values(avis);
+
     const today = new Date();
-    const filteredReservations = reservations.filter(r => {
+    const filteredReservations = resArray.filter(r => {
         const arrival = new Date(r.date_arrivee);
         const departure = new Date(r.date_depart);
         if (reservationFilter === 'avenir')     return arrival >= today && r.statut !== 'annulee';
@@ -97,9 +101,11 @@ export default function ClientDashboard() {
         }
     };
 
-    const upcomingCount = reservations.filter(r => new Date(r.date_arrivee) >= today && r.statut !== 'annulee').length;
+
+
+    const upcomingCount = resArray.filter(r => new Date(r.date_arrivee) >= today && r.statut !== 'annulee').length;
     const favorisTotalCount = Object.values(favoris).flat().length;
-    const unreadNotifs = notifications.filter(n => !n.read_at).length;
+    const unreadNotifs = notifsArray.filter(n => !n.read_at).length;
 
     return (
         <div className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-8 min-h-screen bg-gray-50">
@@ -295,10 +301,10 @@ export default function ClientDashboard() {
                                 {/* === MES AVIS === */}
                                 {activeTab === 'Mes Avis' && (
                                     <div className="space-y-4">
-                                        {avis.length === 0 ? (
+                                        {avisArray.length === 0 ? (
                                             <EmptyState icon={Star} message="Vous n'avez pas encore laissé d'avis" />
                                         ) : (
-                                            avis.map(a => {
+                                            avisArray.map(a => {
                                                 const daysSince = Math.floor((new Date() - new Date(a.created_at)) / 86400000);
                                                 const canEdit = daysSince <= 30;
                                                 const canDelete = daysSince <= 7;
@@ -359,7 +365,7 @@ export default function ClientDashboard() {
                                 {/* === PAIEMENTS === */}
                                 {activeTab === 'Paiements' && (
                                     <div>
-                                        {reservations.filter(r => r.paiement).length === 0 ? (
+                                        {resArray.filter(r => r.paiement).length === 0 ? (
                                             <EmptyState icon={CreditCard} message="Aucun paiement enregistré" />
                                         ) : (
                                             <div className="overflow-x-auto">
@@ -373,7 +379,7 @@ export default function ClientDashboard() {
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-gray-50">
-                                                        {reservations.filter(r => r.paiement).map(r => (
+                                                        {resArray.filter(r => r.paiement).map(r => (
                                                             <tr key={r.id} className="hover:bg-gray-50 transition-colors">
                                                                 <td className="py-4 font-bold text-primary">{r.logement?.titre}</td>
                                                                 <td className="py-4 text-gray-500 font-medium">{new Date(r.created_at).toLocaleDateString('fr-FR')}</td>
@@ -395,10 +401,10 @@ export default function ClientDashboard() {
                                 {/* === NOTIFICATIONS === */}
                                 {activeTab === 'Notifications' && (
                                     <div className="space-y-3">
-                                        {notifications.length === 0 ? (
+                                        {notifsArray.length === 0 ? (
                                             <EmptyState icon={Bell} message="Aucune notification" />
                                         ) : (
-                                            notifications.map(n => (
+                                            notifsArray.map(n => (
                                                 <div key={n.id} className={`p-5 rounded-[20px] border transition-all ${n.read_at ? 'bg-gray-50 border-gray-100' : 'bg-primary/5 border-primary/20'}`}>
                                                     <p className={`text-sm font-bold ${n.read_at ? 'text-gray-600' : 'text-primary'}`}>
                                                         {n.data?.message || JSON.stringify(n.data)}
