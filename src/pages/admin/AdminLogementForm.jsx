@@ -17,6 +17,9 @@ const AdminLogementForm = () => {
     const [formData, setFormData] = useState({
         titre: '',
         description: '',
+        adresse: '',
+        ville: '',
+        pays: '',
         prix_nuit: '',
         capacite: '',
         equipements: '',
@@ -58,6 +61,9 @@ const AdminLogementForm = () => {
                     setFormData({
                         titre: data.titre || '',
                         description: data.description || '',
+                        adresse: data.adresse || '',
+                        ville: data.ville || '',
+                        pays: data.pays || '',
                         prix_nuit: data.prix_nuit || '',
                         capacite: data.capacite || '',
                         equipements: equipmentsStr,
@@ -131,6 +137,9 @@ const AdminLogementForm = () => {
         const payload = new FormData();
         payload.append('titre', formData.titre);
         payload.append('description', formData.description || '');
+        payload.append('adresse', formData.adresse || '');
+        payload.append('ville', formData.ville || '');
+        payload.append('pays', formData.pays || '');
         payload.append('prix_nuit', formData.prix_nuit);
         payload.append('capacite', formData.capacite);
         payload.append('equipements', JSON.stringify(equipParsed));
@@ -182,6 +191,21 @@ const AdminLogementForm = () => {
                     <div>
                         <label className="block text-sm font-medium mb-1">Description</label>
                         <textarea name="description" rows={4} value={formData.description} onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 outline-none focus:border-black transition" />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Adresse</label>
+                            <input type="text" name="adresse" value={formData.adresse} onChange={handleChange} placeholder="Ex: 12 Rue des Palmiers" className="w-full border border-gray-300 px-3 py-2 outline-none focus:border-black transition" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Ville</label>
+                            <input type="text" name="ville" value={formData.ville} onChange={handleChange} placeholder="Ex: Abidjan" className="w-full border border-gray-300 px-3 py-2 outline-none focus:border-black transition" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Pays</label>
+                            <input type="text" name="pays" value={formData.pays} onChange={handleChange} placeholder="Ex: Côte d'Ivoire" className="w-full border border-gray-300 px-3 py-2 outline-none focus:border-black transition" />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-6">

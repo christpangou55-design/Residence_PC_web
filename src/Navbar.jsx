@@ -105,6 +105,11 @@ const Navbar = ({ user, setUser }) => {
                                              Mes Annonces
                                          </Link>
                                      )}
+                                     {user.role === 'client' && (
+                                         <Link to="/dashboard" className="text-[9px] 2xl:text-[10px] font-black text-white px-2 py-1 2xl:px-3 2xl:py-1.5 bg-primary-dark rounded-lg hover:bg-primary transition uppercase tracking-widest border border-white/10 whitespace-nowrap">
+                                             Mon Espace
+                                         </Link>
+                                     )}
                                      <button onClick={handleLogout} className="p-1.5 2xl:p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-xl transition duration-300">
                                          <LogOut className="w-4 h-4 2xl:w-5 2xl:h-5" />
                                      </button>

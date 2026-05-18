@@ -11,6 +11,7 @@ import AdminLogements from './pages/admin/AdminLogements';
 import AdminLogementForm from './pages/admin/AdminLogementForm';
 import MyLogements from './pages/vendeur/MyLogements';
 import VendeurLogementForm from './pages/vendeur/LogementForm';
+import ClientDashboard from './pages/client/Dashboard';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentCancel from './pages/PaymentCancel';
 import Residences from './pages/Residences';
@@ -47,6 +48,9 @@ const App = () => {
                     <Route path="vendeur/logements" element={<MyLogements />} />
                     <Route path="vendeur/logements/create" element={<VendeurLogementForm />} />
                     <Route path="vendeur/logements/:id/edit" element={<VendeurLogementForm />} />
+
+                    {/* Dashboard Client */}
+                    <Route path="dashboard" element={<ClientDashboard />} />
                     
                     {/* Routes de confirmation de paiement (Stripe) */}
                     <Route path="payment/success" element={<PaymentSuccess />} />

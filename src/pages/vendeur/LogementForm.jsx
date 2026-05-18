@@ -17,6 +17,9 @@ const LogementForm = () => {
     const [formData, setFormData] = useState({
         titre: '',
         description: '',
+        adresse: '',
+        ville: '',
+        pays: '',
         prix_nuit: '',
         capacite: '',
         equipements: '',
@@ -65,6 +68,9 @@ const LogementForm = () => {
                     setFormData({
                         titre: data.titre || '',
                         description: data.description || '',
+                        adresse: data.adresse || '',
+                        ville: data.ville || '',
+                        pays: data.pays || '',
                         prix_nuit: data.prix_nuit || '',
                         capacite: data.capacite || '',
                         equipements: equipmentsStr,
@@ -138,6 +144,9 @@ const LogementForm = () => {
         const payload = new FormData();
         payload.append('titre', formData.titre);
         payload.append('description', formData.description || '');
+        payload.append('adresse', formData.adresse || '');
+        payload.append('ville', formData.ville || '');
+        payload.append('pays', formData.pays || '');
         payload.append('prix_nuit', formData.prix_nuit);
         payload.append('capacite', formData.capacite);
         payload.append('equipements', JSON.stringify(equipParsed));
@@ -218,6 +227,36 @@ const LogementForm = () => {
                                         value={formData.description} onChange={handleChange} 
                                         placeholder="Décrivez les atouts de votre logement..."
                                         className="w-full bg-gray-50 border-2 border-transparent px-6 py-4 rounded-2xl outline-none focus:border-primary focus:bg-white transition-all font-bold text-primary resize-none" 
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="group md:col-span-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 ml-1 group-focus-within:text-primary transition-colors">Adresse</label>
+                                    <input 
+                                        type="text" name="adresse"
+                                        value={formData.adresse} onChange={handleChange}
+                                        placeholder="Ex: 12 Rue des Palmiers"
+                                        className="w-full bg-gray-50 border-2 border-transparent px-6 py-4 rounded-2xl outline-none focus:border-primary focus:bg-white transition-all font-bold text-primary"
+                                    />
+                                </div>
+                                <div className="group">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 ml-1 group-focus-within:text-primary transition-colors">Ville</label>
+                                    <input 
+                                        type="text" name="ville"
+                                        value={formData.ville} onChange={handleChange}
+                                        placeholder="Ex: Abidjan"
+                                        className="w-full bg-gray-50 border-2 border-transparent px-6 py-4 rounded-2xl outline-none focus:border-primary focus:bg-white transition-all font-bold text-primary"
+                                    />
+                                </div>
+                                <div className="group">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 ml-1 group-focus-within:text-primary transition-colors">Pays</label>
+                                    <input 
+                                        type="text" name="pays"
+                                        value={formData.pays} onChange={handleChange}
+                                        placeholder="Ex: Côte d'Ivoire"
+                                        className="w-full bg-gray-50 border-2 border-transparent px-6 py-4 rounded-2xl outline-none focus:border-primary focus:bg-white transition-all font-bold text-primary"
                                     />
                                 </div>
                             </div>
