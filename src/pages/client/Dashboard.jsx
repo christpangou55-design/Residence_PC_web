@@ -102,7 +102,7 @@ export default function ClientDashboard() {
     const unreadNotifs = notifications.filter(n => !n.read_at).length;
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-8 min-h-screen bg-gray-50">
             {/* Header */}
             <div className="bg-primary text-white pt-12 pb-24 px-6 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-5">
